@@ -101,7 +101,6 @@ Model_CT <- rpart(classe ~ ., data = TrainData, method="class")
 
 # Show tree by using fancyRpartPlot function
 fancyRpartPlot(Model_CT)
-
 ```
 
 ### 3.1.2 Validating
