@@ -7,17 +7,29 @@ output:
   pdf_document: default
 ---
 
-# Introduction 
+# 1. Introduction 
 
-Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.The goal of this project is to predict the manner in which they did the exercise by using the data collected by Human Activity Recognition project. 
+## 1.1 Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
-# Data Processing
+# 2. Data Processing
 
-## Getting and Cleaning Data
+The training data for this project are available here:
 
-### Download and Read the Data
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+## 2.1 Getting and Cleaning Data
+
+### 2.1.1 Download and Read the Data
 ```{r}
 # Globe environment setting
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
 library(lattice)
 library(ggplot2)
 library(ggcorrplot)
@@ -26,7 +38,6 @@ library(rattle)
 library(rpart)
 library(rpart.plot)
 library(corrplot)
-knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
 
 # Import data sets
 TrainUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
@@ -35,7 +46,7 @@ RawTrainData <- read.csv(url(TrainUrl), header = TRUE)
 TestSet <- read.csv(url(TestUrl), header = TRUE)
 ```
 
-### Filter the Data
+### 2.1.2 Filter the Data
 
 - Notice there are missing values in the data set, and variables provides information of observations but not for prediction, so we will neglect these data. 
 ```{r}
@@ -49,9 +60,9 @@ TrainData <- RawTrainData[, colSums(is.na(RawTrainData)) == 0]
 TrainData <- TrainData[, -c(1:7)]
 ```
 
-## Preprocessing Data
+## 2.2 Arranging Data
 
-### More Data Cleaning
+### 2.2.1 More Data Cleaning
 
 ```{R}
 # remove variables have very little variation
@@ -60,7 +71,7 @@ TrainData <- TrainData[, -remove]
 ```
 
 
-### Slice the Data
+### 2.2.2 Slice the Data
 - Split the training data into a training data set and a validation data set for the cross validation.
 
 ```{R}
@@ -72,16 +83,18 @@ TrainData <- TrainData[partition, ]
 TestData <- TrainData[-partition, ]
 ```
 
-## Modeling Data with Different Algorithms
+# 3. Modeling Data with Different Algorithms
 
 We plan to use following methods to train and predict the data:
+
 - Classification Trees
 - Random Forests
 - Generalized Boosted Model
 
-### Classification Trees Method
+## 3.1 Classification Trees Method
 
-- Training
+### 3.1.1 Training 
+
 ```{R}
 # Train data through classification tree method
 Model_CT <- rpart(classe ~ ., data = TrainData, method="class")
@@ -91,7 +104,7 @@ fancyRpartPlot(Model_CT)
 
 ```
 
-- Validating
+### 3.1.2 Validating
 
 ```{R}
 # Predict validation data with the model trained
@@ -104,9 +117,9 @@ confmat_CT
 
 - Here we get a 0.75 prediction accuracy with the classification tree method, which is not that ideal, so we need to try other ways.
 
-### Random Forests Method
+## 3.2 Random Forests Method
 
-- Training
+### 3.2.1 Training
 
 ```{R}
 # Set k=3 in k-fold cross validation
@@ -120,7 +133,7 @@ Model_RF <- train(classe ~ ., data = TrainData, method = "rf", trControl = contr
 Model_RF
 ```
 
-- Validating
+### 3.2.2 Validating
 
 ```{R}
 # Predict validation data with the model trained 
@@ -141,9 +154,9 @@ plot(Model_RF$finalModel)
 varImp(Model_RF)
 ```
 
-### Generalized Boosted Method
+## 3.3 Generalized Boosted Method
 
-- Training 
+### 3.3.1 Training 
 
 ```{R}
 # Set seed for reproduce
@@ -158,7 +171,7 @@ Model_GBM <- train(classe ~ ., data = TrainData, method = "gbm",
 Model_GBM
 ```
 
-- Validating
+### 3.3.2 Validating
 
 ```{R}
 # Predict validation data with the model trained 
@@ -172,17 +185,17 @@ confmat_GBM
 - Here we also get good prediction accuracy with the Generalized Boosted method, so again we want to explore this model.
 
 ```{R}
-# An Boosting Iterations versus accuracy plot
+# A Boosting Iterations versus accuracy plot
 plot(Model_GBM)
 ```
 
-# Conclusion
+# 4. Conclusion
 
 - Classification Trees Model is no a suitable model for this data set.
 - Random Forests Model has the best prediction accuracy, so we will apply it to predict  ``` TestSet```. 
 - Generalized Boosted Model also has a high prediction accuracy, which is just a little bit lower than Random Forests Model's, and it may be an alternate option in the future.
 
-## Apply Random Forests Model to the Test Set 
+## 4.1 Apply Random Forests Model to the Test Set 
 
 ```{R}
 TestPred <- predict(Model_RF, TestSet)

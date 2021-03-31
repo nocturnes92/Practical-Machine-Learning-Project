@@ -7,18 +7,30 @@ output:
   pdf_document: default
 ---
 
-# Introduction 
+# 1. Introduction 
 
-Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it.The goal of this project is to predict the manner in which they did the exercise by using the data collected by Human Activity Recognition project. 
+## 1.1 Background
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
 
-# Data Processing
+# 2. Data Processing
 
-## Getting and Cleaning Data
+The training data for this project are available here:
 
-### Download and Read the Data
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv
+
+The test data are available here:
+
+https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv
+
+The data for this project come from this source: http://web.archive.org/web/20161224072740/http:/groupware.les.inf.puc-rio.br/har. If you use the document you create for this class for any purpose please cite them as they have been very generous in allowing their data to be used for this kind of assignment.
+
+## 2.1 Getting and Cleaning Data
+
+### 2.1.1 Download and Read the Data
 
 ```r
 # Globe environment setting
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
 library(lattice)
 library(ggplot2)
 library(ggcorrplot)
@@ -51,8 +63,6 @@ library(corrplot)
 ```
 
 ```r
-knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
-
 # Import data sets
 TrainUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 TestUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
@@ -60,7 +70,7 @@ RawTrainData <- read.csv(url(TrainUrl), header = TRUE)
 TestSet <- read.csv(url(TestUrl), header = TRUE)
 ```
 
-### Filter the Data
+### 2.1.2 Filter the Data
 
 - Notice there are missing values in the data set, and variables provides information of observations but not for prediction, so we will neglect these data. 
 
@@ -81,9 +91,9 @@ TrainData <- RawTrainData[, colSums(is.na(RawTrainData)) == 0]
 TrainData <- TrainData[, -c(1:7)]
 ```
 
-## Preprocessing Data
+## 2.2 Arranging Data
 
-### More Data Cleaning
+### 2.2.1 More Data Cleaning
 
 
 ```r
@@ -93,7 +103,7 @@ TrainData <- TrainData[, -remove]
 ```
 
 
-### Slice the Data
+### 2.2.2 Slice the Data
 - Split the training data into a training data set and a validation data set for the cross validation.
 
 
@@ -106,16 +116,18 @@ TrainData <- TrainData[partition, ]
 TestData <- TrainData[-partition, ]
 ```
 
-## Modeling Data with Different Algorithms
+# 3. Modeling Data with Different Algorithms
 
 We plan to use following methods to train and predict the data:
+
 - Classification Trees
 - Random Forests
 - Generalized Boosted Model
 
-### Classification Trees Method
+## 3.1 Classification Trees Method
 
-- Training
+### 3.1.1 Training 
+
 
 ```r
 # Train data through classification tree method
@@ -127,7 +139,7 @@ fancyRpartPlot(Model_CT)
 
 ![](Project_Report_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
 
-- Validating
+### 3.1.2 Validating
 
 
 ```r
@@ -176,9 +188,9 @@ confmat_CT
 
 - Here we get a 0.75 prediction accuracy with the classification tree method, which is not that ideal, so we need to try other ways.
 
-### Random Forests Method
+## 3.2 Random Forests Method
 
-- Training
+### 3.2.1 Training
 
 
 ```r
@@ -214,7 +226,7 @@ Model_RF
 ## The final value used for the model was mtry = 27.
 ```
 
-- Validating
+### 3.2.2 Validating
 
 
 ```r
@@ -304,9 +316,9 @@ varImp(Model_RF)
 ## magnet_belt_x          9.778
 ```
 
-### Generalized Boosted Method
+## 3.3 Generalized Boosted Method
 
-- Training 
+### 3.3.1 Training 
 
 
 ```r
@@ -353,7 +365,7 @@ Model_GBM
 ##  3, shrinkage = 0.1 and n.minobsinnode = 10.
 ```
 
-- Validating
+### 3.3.2 Validating
 
 
 ```r
@@ -404,19 +416,19 @@ confmat_GBM
 
 
 ```r
-# An Boosting Iterations versus accuracy plot
+# A Boosting Iterations versus accuracy plot
 plot(Model_GBM)
 ```
 
 ![](Project_Report_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
 
-# Conclusion
+# 4. Conclusion
 
 - Classification Trees Model is no a suitable model for this data set.
-- Random Forests Model has the best prediction accuracy, so we will apply it to predict  ``` TestData```. 
+- Random Forests Model has the best prediction accuracy, so we will apply it to predict  ``` TestSet```. 
 - Generalized Boosted Model also has a high prediction accuracy, which is just a little bit lower than Random Forests Model's, and it may be an alternate option in the future.
 
-## Apply Random Forests Model to the Test Set 
+## 4.1 Apply Random Forests Model to the Test Set 
 
 
 ```r
