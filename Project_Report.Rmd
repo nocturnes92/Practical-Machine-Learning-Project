@@ -2,9 +2,9 @@
 title: "Practical Machine Learning Project"
 author: "Yigang"
 output:
-  pdf_document: default
   html_document:
     keep_md: yes
+  pdf_document: default
 ---
 
 # Introduction 
@@ -26,33 +26,39 @@ library(rattle)
 library(rpart)
 library(rpart.plot)
 library(corrplot)
-knitr::opts_chunk$set(warning=FALSE, message=FALSE)
+knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
 
 # Import data sets
 TrainUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 TestUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
 RawTrainData <- read.csv(url(TrainUrl), header = TRUE)
-RawTestData <- read.csv(url(TestUrl), header = TRUE)
+TestSet <- read.csv(url(TestUrl), header = TRUE)
 ```
 
-### Clean the Data
+### Filter the Data
 
 - Notice there are missing values in the data set, and variables provides information of observations but not for prediction, so we will neglect these data. 
 ```{r}
 # See how many missing values in the data set
 sum(complete.cases(RawTrainData))
-sum(complete.cases(RawTestData))
 
 # Remove all columns that contain missing values
 TrainData <- RawTrainData[, colSums(is.na(RawTrainData)) == 0]
-TestData <- RawTestData[, colSums(is.na(RawTestData)) == 0]
  
 # Remove columns records users' names, timestamps and etc.
 TrainData <- TrainData[, -c(1:7)]
-TestData <- TestData[, -c(1:7)]
 ```
 
 ## Preprocessing Data
+
+### More Data Cleaning
+
+```{R}
+# remove variables have very little variation
+remove <- nearZeroVar(TrainData)
+TrainData <- TrainData[, -remove]
+```
+
 
 ### Slice the Data
 - Split the training data into a training data set and a validation data set for the cross validation.
@@ -62,8 +68,8 @@ TestData <- TestData[, -c(1:7)]
 # The "classe" variable in the training set is the manner in which users did the exercise
 set.seed(1234)
 partition <- createDataPartition(TrainData$classe, p=0.75, list=FALSE)
-TrainData <- TrainData[partition,]
-ValiData <- TrainData[-partition,]
+TrainData <- TrainData[partition, ]
+TestData <- TrainData[-partition, ]
 ```
 
 ## Modeling Data with Different Algorithms
@@ -80,11 +86,8 @@ We plan to use following methods to train and predict the data:
 # Train data through classification tree method
 Model_CT <- rpart(classe ~ ., data = TrainData, method="class")
 
-# Check the statistical result 
-Model_CT
-
 # Show tree by using fancyRpartPlot function
-fancyRpartPlot(Model_CT$finalModel)
+fancyRpartPlot(Model_CT)
 
 ```
 
@@ -92,49 +95,50 @@ fancyRpartPlot(Model_CT$finalModel)
 
 ```{R}
 # Predict validation data with the model trained
-Pred_CT <- predict(Model_CT, ValiData, type = "class")
+Pred_CT <- predict(Model_CT, TestData, type = "class")
 
 # See the accuracy of the prediction
-confmat_CT <- confusionMatrix(Pred_CT, factor(ValiData$classe))
+confmat_CT <- confusionMatrix(Pred_CT, factor(TestData$classe))
 confmat_CT
 ```
 
-- Here we get a very low prediction accuracy with the classification tree method, so we need to try other ways.
+- Here we get a 0.75 prediction accuracy with the classification tree method, which is not that ideal, so we need to try other ways.
 
 ### Random Forests Method
 
 - Training
 
 ```{R}
-# Set k=5 in k-fold cross validation
-control_RF <- trainControl(method="cv", number=5, verboseIter=FALSE)
+# Set k=3 in k-fold cross validation
+set.seed(1334)
+control_RF <- trainControl(method="cv", number=3, verboseIter=FALSE)
 
 # Train data through random forests method
-Model_RT <- train(classe ~ ., data = TrainData, method = "rf", trControl = control_RF)
+Model_RF <- train(classe ~ ., data = TrainData, method = "rf", trControl = control_RF)
 
 # Check the statistical result 
-Model_RT
+Model_RF
 ```
 
 - Validating
 
 ```{R}
 # Predict validation data with the model trained 
-Pred_RF <- predict(Model_RF, ValiData)
+Pred_RF <- predict(Model_RF, TestData)
 
 # See the accuracy of the prediction
-confmat_RF <- confusionMatrix(Pred_RF, factor(ValiData$classe))
+confmat_RF <- confusionMatrix(Pred_RF, factor(TestData$classe))
 confmat_RF
 ```
 
-- Here we get really good prediction accuracy with the random forests method, so we want to have a deeper view of this model.
+- Here we get incredible perfect prediction accuracy with the random forests method, so we want to have a deeper view of this model.
 
 ```{R}
 # A plot of number of trees versus error of model
 plot(Model_RF$finalModel)
 
 # See the importance of each variables in this model
-varImp(model_RF)
+varImp(Model_RF)
 ```
 
 ### Generalized Boosted Method
@@ -143,7 +147,7 @@ varImp(model_RF)
 
 ```{R}
 # Set seed for reproduce
-set.seed(1233)
+set.seed(1434)
 control_GBM <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
 
 # Train data through random forests method
@@ -158,10 +162,10 @@ Model_GBM
 
 ```{R}
 # Predict validation data with the model trained 
-Pred_GBM <- predict(Model_GBM, ValiData)
+Pred_GBM <- predict(Model_GBM, TestData)
 
 # See the accuracy of the prediction
-confmat_GBM <- confusionMatrix(Pred_GBM, factor(ValiData$classe))
+confmat_GBM <- confusionMatrix(Pred_GBM, factor(TestData$classe))
 confmat_GBM
 ```
 
@@ -175,13 +179,13 @@ plot(Model_GBM)
 # Conclusion
 
 - Classification Trees Model is no a suitable model for this data set.
-- Random Forests Model has the best prediction accuracy, so we will apply it to predict  ``` TestData```. 
+- Random Forests Model has the best prediction accuracy, so we will apply it to predict  ``` TestSet```. 
 - Generalized Boosted Model also has a high prediction accuracy, which is just a little bit lower than Random Forests Model's, and it may be an alternate option in the future.
 
 ## Apply Random Forests Model to the Test Set 
 
 ```{R}
-TestPred <- predict(Model_RF, TestData)
+TestPred <- predict(Model_RF, TestSet)
 TestPred
 ```
 
