@@ -28,41 +28,24 @@ The data for this project come from this source: http://web.archive.org/web/2016
 
 ### 2.1.1 Download and Read the Data
 
+
 ```r
 # Globe environment setting
 knitr::opts_chunk$set(warning=FALSE, message=FALSE, cache = TRUE)
+```
+
+
+```r
+# Load libraries
 library(lattice)
 library(ggplot2)
 library(ggcorrplot)
 library(caret)
 library(rattle)
-```
-
-```
-## Loading required package: tibble
-```
-
-```
-## Loading required package: bitops
-```
-
-```
-## Rattle: A free graphical interface for data science with R.
-## XXXX 5.4.0 Copyright (c) 2006-2020 Togaware Pty Ltd.
-## 键入'rattle()'去轻摇、晃动、翻滚你的数据。
-```
-
-```r
 library(rpart)
 library(rpart.plot)
 library(corrplot)
-```
 
-```
-## corrplot 0.84 loaded
-```
-
-```r
 # Import data sets
 TrainUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"
 TestUrl <- "https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"
@@ -120,24 +103,24 @@ TestData <- TrainData[-partition, ]
 
 We plan to use following methods to train and predict the data:
 
-- Classification Trees
+- Decision Tree
 - Random Forests
-- Generalized Boosted Model
+- Gradient Boosted Method
 
-## 3.1 Classification Trees Method
+## 3.1 Decision Tree Method
 
 ### 3.1.1 Training 
 
 
 ```r
-# Train data through classification tree method
+# Train data through decision tree method
 Model_CT <- rpart(classe ~ ., data = TrainData, method="class")
 
 # Show tree by using fancyRpartPlot function
 fancyRpartPlot(Model_CT)
 ```
 
-![](Project_Report_files/figure-html/unnamed-chunk-5-1.png)<!-- -->
+![](Project_Report_files/figure-html/unnamed-chunk-6-1.png)<!-- -->
 
 ### 3.1.2 Validating
 
@@ -186,7 +169,7 @@ confmat_CT
 ## Balanced Accuracy      0.8998   0.7677   0.8461   0.8052   0.8529
 ```
 
-- Here we get a 0.75 prediction accuracy with the classification tree method, which is not that ideal, so we need to try other ways.
+- Here we get a 0.75 prediction accuracy with the decision tree method, which is not that ideal, so we need to try other ways.
 
 ## 3.2 Random Forests Method
 
@@ -281,7 +264,7 @@ confmat_RF
 plot(Model_RF$finalModel)
 ```
 
-![](Project_Report_files/figure-html/unnamed-chunk-9-1.png)<!-- -->
+![](Project_Report_files/figure-html/unnamed-chunk-10-1.png)<!-- -->
 
 ```r
 # See the importance of each variables in this model
@@ -316,7 +299,7 @@ varImp(Model_RF)
 ## magnet_belt_x          9.778
 ```
 
-## 3.3 Generalized Boosted Method
+## 3.3 Gradient Boosted Method
 
 ### 3.3.1 Training 
 
@@ -326,7 +309,7 @@ varImp(Model_RF)
 set.seed(1434)
 control_GBM <- trainControl(method = "repeatedcv", number = 5, repeats = 1)
 
-# Train data through random forests method
+# Train data through gradient boosted method
 Model_GBM <- train(classe ~ ., data = TrainData, method = "gbm",
                    trControl = control_GBM, verbose = FALSE)
 
@@ -412,7 +395,7 @@ confmat_GBM
 ## Balanced Accuracy      0.9932   0.9789   0.9758   0.9790   0.9841
 ```
 
-- Here we also get good prediction accuracy with the Generalized Boosted method, so again we want to explore this model.
+- Here we also get good prediction accuracy with the gradient boosted method, so again we want to explore this model.
 
 
 ```r
@@ -420,13 +403,13 @@ confmat_GBM
 plot(Model_GBM)
 ```
 
-![](Project_Report_files/figure-html/unnamed-chunk-12-1.png)<!-- -->
+![](Project_Report_files/figure-html/unnamed-chunk-13-1.png)<!-- -->
 
 # 4. Conclusion
 
-- Classification Trees Model is no a suitable model for this data set.
+- Decision Trees Model is no a suitable model for this data set.
 - Random Forests Model has the best prediction accuracy, so we will apply it to predict  ``` TestSet```. 
-- Generalized Boosted Model also has a high prediction accuracy, which is just a little bit lower than Random Forests Model's, and it may be an alternate option in the future.
+- Gradient Boosted Method also has a high prediction accuracy, which is just a little bit lower than Random Forests Model's, and it may be an alternate option in the future.
 
 ## 4.1 Apply Random Forests Model to the Test Set 
 
